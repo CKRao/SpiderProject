@@ -1,26 +1,40 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/puerkitobio/goquery"
-	"io"
 	"log"
 	"os"
-	"path"
 	"spiderProject/httpmodule"
-	"strconv"
+	"spiderProject/parsemoudule"
 )
 
 const (
-	BaseUrl = "https://www.mzitu.com/181701/"
+	BaseUrl = "https://www.mzitu.com/"
 )
 
 func main() {
+	//wg := &sync.WaitGroup{}
+
 	header := make(map[string]string)
 
-	header["Referer"] = "https://www.mzitu.com/"
+	header["referer"] = "https://www.mzitu.com/"
+
+	exits, err := PathExists("./img")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !exits {
+		//创建图片存放目录
+		err := os.Mkdir("./img", os.ModePerm)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	response, err := httpmodule.GetResponse(BaseUrl, &header, false)
 
@@ -34,44 +48,33 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//获取最后的页数
-	lastPageNode := document.Find("body > div.main > div.content > div.pagenavi > a:nth-child(7) > span")
-	lastPageNum, err := strconv.Atoi(lastPageNode.Text())
-	fmt.Println("最后一页页码为", lastPageNum)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for start := 1; start <= lastPageNum; start++ {
-		fmt.Printf("开始获取第 %d 页数据\n",start)
-		response, err := httpmodule.GetResponse(BaseUrl + strconv.Itoa(start), &header, false)
-
-		if err != nil {
-			log.Fatal(err)
+	urlPath := make([]string, 24)
+	document.Find("#pins > li > a").Each(func(i int, selection *goquery.Selection) {
+		val, exists := selection.Attr("href")
+		if exists && len(val) > 0 && val != "" {
+			urlPath = append(urlPath, val+"/")
 		}
+	})
 
-		document, err := goquery.NewDocumentFromReader(bytes.NewReader(response))
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		imageNode := document.Find(".main-image > p > a > img")
-		src, exists := imageNode.Attr("src")
-
-		if exists {
-			imgResp, err := httpmodule.GetResponse(src, &header, false)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fileName := path.Base(src)
-			file, _ := os.Create("C:/Users/clarkrao/go/src/spiderProject/jpg7/" + fileName)
-			writer := bufio.NewWriter(file)
-			io.Copy(writer, bytes.NewReader(imgResp))
-		} else {
-			fmt.Println("图片地址未找到！")
+	for _, url := range urlPath {
+		if url != "" {
+			//wg.Add(1)
+			header["referer"] = url
+			parsemoudule.MZiTuParser(url, &header, nil)
 		}
 	}
 
+	//wg.Wait()
+	fmt.Println("ALL DOWN")
+}
+
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }

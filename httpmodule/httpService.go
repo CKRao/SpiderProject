@@ -10,8 +10,8 @@ import (
 )
 
 /**
-	Get请求获取数据
- */
+Get请求获取数据
+*/
 func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error) {
 	request, err := http.NewRequest("GET", url, nil)
 
@@ -20,8 +20,8 @@ func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error
 	}
 	request.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36")
 	//循环设置请求头
-	for key,value := range *headers {
-		request.Header.Add(key,value)
+	for key, value := range *headers {
+		request.Header.Add(key, value)
 	}
 
 	client := http.DefaultClient
@@ -34,14 +34,13 @@ func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error
 
 	defer response.Body.Close()
 
-	//fmt.Println("StatusCode : ", response.StatusCode)
-
+	fmt.Println("Status : ", response.Status)
 	if response.StatusCode >= 300 && response.StatusCode <= 500 {
 		return nil, fmt.Errorf(" StatusCode error : %d", response.StatusCode)
 	}
 
 	if ok {
-		utf8Content := transform.NewReader(response.Body,simplifiedchinese.GBK.NewDecoder())
+		utf8Content := transform.NewReader(response.Body, simplifiedchinese.GBK.NewDecoder())
 		return ioutil.ReadAll(utf8Content)
 	}
 
@@ -49,8 +48,8 @@ func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error
 }
 
 /**
-	POST请求获取数据
- */
+POST请求获取数据
+*/
 func PostResponse(url string, body string, headers *map[string]string, ok bool) ([]byte, error) {
 	payLoad := strings.NewReader(body)
 
@@ -63,10 +62,9 @@ func PostResponse(url string, body string, headers *map[string]string, ok bool) 
 	request.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36")
 
 	//循环设置请求头
-	for key,value := range *headers {
-		request.Header.Add(key,value)
+	for key, value := range *headers {
+		request.Header.Add(key, value)
 	}
-
 
 	client := http.DefaultClient
 
@@ -85,7 +83,7 @@ func PostResponse(url string, body string, headers *map[string]string, ok bool) 
 	}
 
 	if ok {
-		utf8Content := transform.NewReader(response.Body,simplifiedchinese.GBK.NewDecoder())
+		utf8Content := transform.NewReader(response.Body, simplifiedchinese.GBK.NewDecoder())
 		return ioutil.ReadAll(utf8Content)
 	}
 
