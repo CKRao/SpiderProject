@@ -29,14 +29,14 @@ func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error
 	response, err := client.Do(request)
 
 	if err != nil {
-		return nil, fmt.Errorf("get resonse error : %s", err)
+		return nil, err
 	}
 
 	defer response.Body.Close()
 
-	fmt.Println("Status : ", response.Status)
+	//fmt.Println("Status : ", response.Status)
 	if response.StatusCode >= 300 && response.StatusCode <= 500 {
-		return nil, fmt.Errorf(" StatusCode error : %d", response.StatusCode)
+		return nil, err
 	}
 
 	if ok {
@@ -44,7 +44,13 @@ func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error
 		return ioutil.ReadAll(utf8Content)
 	}
 
-	return ioutil.ReadAll(response.Body)
+	bytes, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
 }
 
 /**
@@ -71,7 +77,7 @@ func PostResponse(url string, body string, headers *map[string]string, ok bool) 
 	response, err := client.Do(request)
 
 	if err != nil {
-		return nil, fmt.Errorf("get resonse error : %s", err)
+		return nil, err
 	}
 
 	defer response.Body.Close()
@@ -79,7 +85,7 @@ func PostResponse(url string, body string, headers *map[string]string, ok bool) 
 	fmt.Println("StatusCode : ", response.StatusCode)
 
 	if response.StatusCode >= 300 && response.StatusCode <= 500 {
-		return nil, fmt.Errorf(" StatusCode error : %d", response.StatusCode)
+		return nil, err
 	}
 
 	if ok {

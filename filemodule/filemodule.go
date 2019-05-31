@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 )
@@ -14,11 +13,41 @@ func CreateImage(dirPath string, imageSrc string, imgResp []byte) {
 	fmt.Printf("开始创建图片 %s \n", imageSrc)
 
 	fileName := path.Base(imageSrc)
-	file, _ := os.Create(dirPath + "/" + fileName)
-	writer := bufio.NewWriter(file)
-	_, err := io.Copy(writer, bytes.NewReader(imgResp))
+
+	filePath := dirPath + "/" + fileName
+
+	exists, err := pathExists(filePath)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
+
+	if exists {
+		fmt.Println(filePath, "已存在")
+		return
+	}
+
+	file, _ := os.Create(filePath)
+	writer := bufio.NewWriter(file)
+	_, err = io.Copy(writer, bytes.NewReader(imgResp))
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+/**
+判断文件是否存在
+*/
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }

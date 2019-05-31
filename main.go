@@ -8,20 +8,23 @@ import (
 	"os"
 	"spiderProject/httpmodule"
 	"spiderProject/parsemoudule"
+	"strconv"
+	"sync"
+	"time"
 )
 
 const (
-	BaseUrl = "https://www.mzitu.com/"
+	BaseUrl = "https://www.mzitu.com/xinggan/page/"
 )
 
 func main() {
-	//wg := &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 
 	header := make(map[string]string)
 
 	header["referer"] = "https://www.mzitu.com/"
 
-	exits, err := PathExists("./img")
+	exits, err := parsemoudule.PathExists("./img")
 
 	if err != nil {
 		log.Fatal(err)
@@ -36,16 +39,30 @@ func main() {
 		}
 	}
 
-	response, err := httpmodule.GetResponse(BaseUrl, &header, false)
+	for start := 5; start <= 149; start++ {
+		//wg.Add(1)
+		startFirstPage(header, wg, start)
+		//time.Sleep(30 * time.Second)//延迟30秒去处理下一个任务，不然可能造成响应数据拿不到
+	}
+
+	wg.Wait()
+	fmt.Println("ALL DOWN")
+}
+
+func startFirstPage(header map[string]string, wg *sync.WaitGroup, index int) {
+	//defer wg.Done()
+	response, err := httpmodule.GetResponse(BaseUrl+strconv.Itoa(index), &header, false)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 
 	document, err := goquery.NewDocumentFromReader(bytes.NewReader(response))
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 
 	urlPath := make([]string, 24)
@@ -58,23 +75,10 @@ func main() {
 
 	for _, url := range urlPath {
 		if url != "" {
-			//wg.Add(1)
+			wg.Add(1)
 			header["referer"] = url
-			parsemoudule.MZiTuParser(url, &header, nil)
+			go parsemoudule.MZiTuParser(url, &header, wg)
+			time.Sleep(10 * time.Second) //延迟8秒去处理下一个任务，不然可能造成响应数据拿不到
 		}
 	}
-
-	//wg.Wait()
-	fmt.Println("ALL DOWN")
-}
-
-func PathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
 }
