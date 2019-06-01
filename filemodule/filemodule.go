@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"spiderProject/util"
 )
 
 func CreateImage(dirPath string, imageSrc string, imgResp []byte) {
@@ -16,7 +17,7 @@ func CreateImage(dirPath string, imageSrc string, imgResp []byte) {
 
 	filePath := dirPath + "/" + fileName
 
-	exists, err := pathExists(filePath)
+	exists, err := util.PathExists(filePath)
 
 	if err != nil {
 		fmt.Println(err)
@@ -36,18 +37,4 @@ func CreateImage(dirPath string, imageSrc string, imgResp []byte) {
 		fmt.Println(err)
 		return
 	}
-}
-
-/**
-判断文件是否存在
-*/
-func pathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
 }

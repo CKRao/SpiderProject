@@ -8,9 +8,9 @@ import (
 	"os"
 	"spiderProject/filemodule"
 	"spiderProject/httpmodule"
+	"spiderProject/util"
 	"strconv"
 	"sync"
-	"time"
 )
 
 func MZiTuParser(url string, header *map[string]string, wg *sync.WaitGroup) {
@@ -45,7 +45,7 @@ func MZiTuParser(url string, header *map[string]string, wg *sync.WaitGroup) {
 	//以页面图集标题为目录名
 
 	dirPath := "E:/downImg/" + document.Find(".main-title").Text()
-	exists, err := PathExists(dirPath)
+	exists, err := util.PathExists(dirPath)
 
 	if err != nil {
 		fmt.Println(err)
@@ -62,15 +62,18 @@ func MZiTuParser(url string, header *map[string]string, wg *sync.WaitGroup) {
 	}
 
 	for start := 1; start <= lastPageNum; start++ {
-		wg.Add(1)
-		go downloadImg(start, header, wg, url, dirPath)
-		time.Sleep(1 * time.Second)
+		//wg.Add(1)
+		downloadImg(start, header, nil, url, dirPath)
+		//if start %4 == 0 {
+		//	//time.Sleep(4 * time.Second)
+		//	runtime.Gosched()
+		//}
 	}
 
 }
 
 func downloadImg(start int, header *map[string]string, wg *sync.WaitGroup, url string, dirPath string) {
-	defer wg.Done()
+	//defer wg.Done()
 	fmt.Printf("开始获取第 %d 页数据\n", start)
 	resp, err := httpmodule.GetResponse(url+strconv.Itoa(start), header, false)
 
@@ -99,18 +102,4 @@ func downloadImg(start int, header *map[string]string, wg *sync.WaitGroup, url s
 	} else {
 		fmt.Println("图片地址未找到！")
 	}
-}
-
-/**
-判断文件是否存在
-*/
-func PathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
 }

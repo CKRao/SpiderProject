@@ -8,13 +8,14 @@ import (
 	"os"
 	"spiderProject/httpmodule"
 	"spiderProject/parsemoudule"
+	"spiderProject/util"
 	"strconv"
 	"sync"
 	"time"
 )
 
 const (
-	BaseUrl = "https://www.mzitu.com/xinggan/page/"
+	BaseUrl = "https://www.mzitu.com/tag/meitun/page/"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 
 	header["referer"] = "https://www.mzitu.com/"
 
-	exits, err := parsemoudule.PathExists("./img")
+	exits, err := util.PathExists("./img")
 
 	if err != nil {
 		log.Fatal(err)
@@ -39,10 +40,10 @@ func main() {
 		}
 	}
 
-	for start := 5; start <= 149; start++ {
-		//wg.Add(1)
+	for start := 1; start <= 20; start++ {
+		wg.Add(1)
 		startFirstPage(header, wg, start)
-		//time.Sleep(30 * time.Second)//延迟30秒去处理下一个任务，不然可能造成响应数据拿不到
+		time.Sleep(10 * time.Second) //延迟30秒去处理下一个任务，不然可能造成响应数据拿不到
 	}
 
 	wg.Wait()
@@ -50,7 +51,7 @@ func main() {
 }
 
 func startFirstPage(header map[string]string, wg *sync.WaitGroup, index int) {
-	//defer wg.Done()
+	defer wg.Done()
 	response, err := httpmodule.GetResponse(BaseUrl+strconv.Itoa(index), &header, false)
 
 	if err != nil {
@@ -73,12 +74,15 @@ func startFirstPage(header map[string]string, wg *sync.WaitGroup, index int) {
 		}
 	})
 
-	for _, url := range urlPath {
+	for index, url := range urlPath {
 		if url != "" {
 			wg.Add(1)
 			header["referer"] = url
 			go parsemoudule.MZiTuParser(url, &header, wg)
-			time.Sleep(10 * time.Second) //延迟8秒去处理下一个任务，不然可能造成响应数据拿不到
+			if index%2 == 0 {
+				time.Sleep(10 * time.Second) //延迟8秒去处理下一个任务，不然可能造成响应数据拿不到
+				//runtime.Gosched()
+			}
 		}
 	}
 }
