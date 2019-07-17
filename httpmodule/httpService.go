@@ -6,14 +6,16 @@ import (
 	"golang.org/x/text/transform"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"spiderProject/ippool"
 	"strings"
 )
 
 /**
 Get请求获取数据
 */
-func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error) {
-	request, err := http.NewRequest("GET", url, nil)
+func GetResponse(requrl string, headers *map[string]string, ok bool) ([]byte, error) {
+	request, err := http.NewRequest("GET", requrl, nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("create request error : %s", err)
@@ -24,7 +26,23 @@ func GetResponse(url string, headers *map[string]string, ok bool) ([]byte, error
 		request.Header.Add(key, value)
 	}
 
-	client := http.DefaultClient
+	client := &http.Client{}
+
+	ip := ippool.GetIP()
+	if ip == "" {
+		client = http.DefaultClient
+	} else {
+		proxy, err := url.Parse(ip)
+		client = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxy),
+			},
+		}
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+	}
 
 	response, err := client.Do(request)
 

@@ -42,8 +42,8 @@ func main() {
 
 	for start := 1; start <= 20; start++ {
 		wg.Add(1)
-		startFirstPage(header, wg, start)
-		time.Sleep(10 * time.Second) //延迟30秒去处理下一个任务，不然可能造成响应数据拿不到
+		go startFirstPage(header, wg, start)
+		time.Sleep(20 * time.Second) //延迟30秒去处理下一个任务，不然可能造成响应数据拿不到
 	}
 
 	wg.Wait()
@@ -80,7 +80,7 @@ func startFirstPage(header map[string]string, wg *sync.WaitGroup, index int) {
 			header["referer"] = url
 			go parsemoudule.MZiTuParser(url, &header, wg)
 			if index%2 == 0 {
-				time.Sleep(10 * time.Second) //延迟8秒去处理下一个任务，不然可能造成响应数据拿不到
+				time.Sleep(10 * time.Second) //延迟10秒去处理下一个任务，不然可能造成响应数据拿不到
 				//runtime.Gosched()
 			}
 		}
